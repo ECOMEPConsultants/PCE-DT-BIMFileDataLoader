@@ -1,0 +1,22 @@
+#forgeViewer {
+    width: 100%;
+    height: 100%;
+}
+
+
+
+#clickoff {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1; /* Ensure it's behind other elements */
+    pointer-events: none; /* Prevent it from blocking interactions */
+}
+
+.viewer-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
