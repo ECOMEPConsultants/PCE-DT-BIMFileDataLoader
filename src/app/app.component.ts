@@ -72,6 +72,8 @@ export class AppComponent implements OnInit{
     var options = {
       env: 'AutodeskProduction',
       api: 'derivativeV2',
+      disableBrowserContextMenu: true,
+      experimental: ['no-debug'],
       getAccessToken: async function (onTokenReady: any) {
         var token = acc_tok;
         var timeInSeconds = 3600; // Use value provided by APS Authentication (OAuth) API
@@ -116,8 +118,8 @@ export class AppComponent implements OnInit{
       }
       console.log('Initialization complete, loading a model next...');
     });
-    var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9IUmlzaGFicmFqLUdNQTYzJTIwQ29vcmRpbmF0ZWQubndk';
-    // var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9NYW5nYWwlMjBCdWlsZGhvbWUtTWFsYWQlMjBHYXV0YW1fQ29vcmRpbmF0ZWRfUjQubndk';
+    // var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9IUmlzaGFicmFqLUdNQTYzJTIwQ29vcmRpbmF0ZWQubndk'; //gma63
+    var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9NYW5nYWwlMjBCdWlsZGhvbWUtTWFsYWQlMjBHYXV0YW1fQ29vcmRpbmF0ZWRfUjQubndk';
     Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess.bind(this), onDocumentLoadFailure);
     function onDocumentLoadSuccess(viewerDocument: any) {
       var defaultModel = viewerDocument.getRoot().getDefaultGeometry();
@@ -238,7 +240,8 @@ export class AppComponent implements OnInit{
           'region': 'Maharashtra',
           'portfolio_id': 1,
           'location_id': 'bb6e66dc-22c8-44c5-bcea-3aa10a1fe705',
-          'building_name': 'GMA63',
+          'building_name': 'Mangal Buildhome-V2',
+          // 'building_name': 'GMA63-V2',
           'building_urn': _viewer.model.getData().urn,
           'building_address': 'Goregaon',
           'building_city': 'Mumbai',
@@ -369,7 +372,7 @@ export class AppComponent implements OnInit{
               }
               let _eq_obj = {
                 'id': this.generateUUIDv4(),
-                'name': _eq['name'],
+                'name': `${_eq['name']}~!@#${_forge_id}`,
                 // @ts-ignore
                 'displayName': `${_eq['name']} - ${_eq_name_counter[_eq['name']]}`,
                 // @ts-ignore
