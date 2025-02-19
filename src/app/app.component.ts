@@ -374,6 +374,7 @@ export class AppComponent implements OnInit{
                 'displayName': `${_eq['name']} - ${_eq_name_counter[_eq['name']]}`,
                 // @ts-ignore
                 'floorId': floor_name_floor_id_map[_eq['dtl']],
+                'buldingId': building_id,
                 "wingId": null,
                 "zoneId": null,
                 "roomId": null,
