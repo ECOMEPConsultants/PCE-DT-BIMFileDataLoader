@@ -1,6 +1,8 @@
 /// <reference types="forge-viewer" />
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { firstValueFrom, lastValueFrom, take } from 'rxjs';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -50,7 +52,7 @@ export class AppComponent implements OnInit{
 
     let _resp: any;
     _resp = await this.httpClient.get("https://developer.api.autodesk.com/oss/v2/buckets/dt-proj-bucket-1/objects", _httpOptions).toPromise();
-    debugger
+    // debugger
     return _resp;
 
   }
@@ -114,8 +116,8 @@ export class AppComponent implements OnInit{
       }
       console.log('Initialization complete, loading a model next...');
     });
-    // var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9IUmlzaGFicmFqLUdNQTYzJTIwQ29vcmRpbmF0ZWQubndk';
-    var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9NYW5nYWwlMjBCdWlsZGhvbWUtTWFsYWQlMjBHYXV0YW1fQ29vcmRpbmF0ZWRfUjQubndk';
+    var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9IUmlzaGFicmFqLUdNQTYzJTIwQ29vcmRpbmF0ZWQubndk';
+    // var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9NYW5nYWwlMjBCdWlsZGhvbWUtTWFsYWQlMjBHYXV0YW1fQ29vcmRpbmF0ZWRfUjQubndk';
     Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess.bind(this), onDocumentLoadFailure);
     function onDocumentLoadSuccess(viewerDocument: any) {
       var defaultModel = viewerDocument.getRoot().getDefaultGeometry();
@@ -135,6 +137,14 @@ export class AppComponent implements OnInit{
     }
   }
 
+  private generateUUIDv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+  
   async post_full_load() {
     // @ts-ignore
     let _viewer = window["NOP_VIEWER"];
@@ -156,6 +166,8 @@ export class AppComponent implements OnInit{
       return node;
   }
   const modelBrowserJson = buildNodeJson(rootId);
+  // @ts-ignore
+  var _eq_post_arr = []
   
   _viewer.model.getObjectTree((tree: { enumNodeChildren: (arg0: any, arg1: (dbId: any) => void, arg2: boolean) => void; getRootId: () => any; }) => {
     const allDbIds: number[] = [];
@@ -165,13 +177,24 @@ export class AppComponent implements OnInit{
 
     var floors = {}
 
+    var unique_category = new Set()
+    var unique_types = new Set()
+
     // Bulk fetch properties for all dbIds
-    _viewer.model.getBulkProperties(allDbIds, ['DT Category', 'DT System', 'DT Level', 'DT Zone'], (results: any[]) => {
+    _viewer.model.getBulkProperties(allDbIds, ['DT Category', 'DT System', 'DT Level', 'DT Zone', 'name'], async (results: any[]) => {
         results.forEach((item: { properties: any[]; dbId: string | number; }) => {
-            const properties: { dtc?: any; dts?: any ; dtl?:any; dtz?:any} = {};
+            const properties: { dtc?: any; dts?: any ; dtl?:any; dtz?:any; name?:any} = {};
             item.properties.forEach((p: { displayName: string; displayValue: any; }) => {
-                if (p.displayName === "DT Category") properties.dtc = p.displayValue;
-                if (p.displayName === "DT System") properties.dts = p.displayValue;
+                if (p.displayName === "DT Category") {
+                  properties.dtc = p.displayValue
+                  unique_category.add(p.displayValue)
+                };
+                if (p.displayName === "DT System") {
+                  properties.dts = p.displayValue
+                  // @ts-ignore
+                  properties.name = item.name;
+                  unique_types.add(p.displayValue)
+                };
                 if (p.displayName === "DT Zone") properties.dtz = p.displayValue;
                 if (p.displayName === "DT Level") {
                   properties.dtl = p.displayValue;
@@ -190,14 +213,195 @@ export class AppComponent implements OnInit{
             }
         });
 
+        
+        // console.log("Filtered Properties:", db_data);
+
+        let _httpOptions = {
+          headers: new HttpHeaders({
+            accept: `text/plain`,
+            'Content-Type': 'application/json',
+    
+          })
+        };
+        let body = {
+          "username": "saurabh87",
+          "password": "Saurabh@87"
+        }
+        let _resp: any;
+        _resp = await this.httpClient.post("https://pce-dt-api.azurewebsites.net/Auth/login", JSON.stringify(body), _httpOptions).toPromise();
+        console.log(_resp);
+        let _token = _resp.token
+
+
+
         var db_data = {
           'region': 'Maharashtra',
-          'building': 'GMA63',
+          'portfolio_id': 1,
+          'location_id': 'bb6e66dc-22c8-44c5-bcea-3aa10a1fe705',
+          'building_name': 'GMA63',
           'building_urn': _viewer.model.getData().urn,
+          'building_address': 'Goregaon',
+          'building_city': 'Mumbai',
           'floors': floors,
           'equipment': this.propertyData
         }
-        console.log("Filtered Properties:", db_data);
+
+                 
+          let headers = new HttpHeaders({
+            'Authorization': `Bearer ${_token}`,
+            'Content-Type': 'application/json'
+            
+          })
+
+
+        body = {
+          // @ts-ignore
+          "name": db_data.building_name,
+          // @ts-ignore
+          "address": db_data.building_address,
+          // @ts-ignore
+          "city": db_data.building_city,
+          // @ts-ignore
+          "country": db_data.building_urn,
+          "geog": {
+            "x": 0,
+            "y": 0
+          },
+          "isDeleted": false,
+          // @ts-ignore
+          "locationId": db_data.location_id,
+          "hasWing": false
+        }
+        
+        _resp = await this.httpClient.post("https://pce-dt-api.azurewebsites.net/Building/SaveBuilding", JSON.stringify(body), {headers, responseType: 'text'}).pipe(take(1)).subscribe(async value => {
+        let building_id = value;
+
+
+        let floor_name_floor_id_map = {};
+        Object.keys(db_data.floors).forEach(async (floor_name) => {
+          // console.log(floor_name)
+          body = {
+            // @ts-ignore
+              "name": floor_name,
+              "hasZone": false,
+              "hasRoom": true,
+              "buildingId": building_id,
+              "wingId": null
+            }
+
+            let _floor_id = await firstValueFrom(this.httpClient.post("https://pce-dt-api.azurewebsites.net/Floor/SaveFloor", JSON.stringify(body), {headers, responseType: 'text'}));
+            // @ts-ignore
+            floor_name_floor_id_map[floor_name] = _floor_id;
+          // debugger;
+          })
+
+          let category_id_map = {};
+          unique_category.forEach(async (category_name) => {
+            body = {
+              // @ts-ignore
+              "name": category_name,
+              "portfolioId": db_data.portfolio_id,
+              "isDeleted": false
+            }
+            let category_id = await firstValueFrom(this.httpClient.post("https://pce-dt-api.azurewebsites.net/EquipmentCategory/SaveEquipmentCategory", JSON.stringify(body), {headers, responseType: 'text'}));
+            // @ts-ignore
+            category_id_map[category_name] = category_id;
+
+          })
+
+
+          let _eq_system_id = {};
+
+          
+          let _eq_display_name_map = {}
+
+
+          let _eq_name_counter = {}
+
+
+
+          for (const forge_id of Object.keys(db_data.equipment)) {
+            let _forge_id = Number(forge_id)
+            // @ts-ignore
+            let _eq = db_data.equipment[_forge_id]
+            
+
+
+            if ('dts' in _eq && 'dtc' in _eq && 'dtl' in _eq) {
+              if (Object.keys(_eq_system_id).includes(_eq['dts'])) {
+                console.log(Object.keys(_eq_system_id))
+              } else {
+                body = {
+                  // @ts-ignore
+                  "name": _eq['dts'],
+                  // @ts-ignore
+                  "equipmentCategoryId": category_id_map[_eq['dtc']],
+                  "isDeleted": false
+                }
+                let _system_id = await lastValueFrom(this.httpClient.post("https://pce-dt-api.azurewebsites.net/EquipmentType/SaveEquipmentType", JSON.stringify(body), {headers, responseType: 'text'}));
+                // @ts-ignore
+                _eq_system_id[_eq['dts']] = _system_id;
+              }
+                // let _system_id = await this.httpClient.post("https://pce-dt-api.azurewebsites.net/EquipmentType/SaveEquipmentType", JSON.stringify(body), {headers, responseType: 'text'}).pipe(take(1)).subscribe(async value => {
+                  // @ts-ignore
+                  // _eq_system_id[_eq['dts']] = value;
+                // })              
+
+              let display_name_fqdr = `${_eq['name']}-${_eq['dts']}-${_eq['dtc']}`
+
+              if (display_name_fqdr in Object.keys(_eq_display_name_map)) {
+                // @ts-ignore
+                _eq_display_name_map[display_name_fqdr] = _eq_display_name_map[display_name_fqdr]++
+              } else {
+                // @ts-ignore
+                _eq_display_name_map[display_name_fqdr] = 1
+              }
+
+              
+              // let display_name_fqdr = `${_eq['name']}-${_eq['dts']}-${_eq['dtc']}`
+
+              if (Object.keys(_eq_name_counter).includes(_eq['name'])) {
+                // @ts-ignore
+                _eq_name_counter[_eq['name']] = _eq_name_counter[_eq['name']] + 1
+              } else {
+                // @ts-ignore
+                _eq_name_counter[_eq['name']] = 1
+              }
+              let _eq_obj = {
+                'id': this.generateUUIDv4(),
+                'name': _eq['name'],
+                // @ts-ignore
+                'displayName': `${_eq['name']} - ${_eq_name_counter[_eq['name']]}`,
+                // @ts-ignore
+                'floorId': floor_name_floor_id_map[_eq['dtl']],
+                "wingId": null,
+                "zoneId": null,
+                "roomId": null,
+                // @ts-ignore
+                "equipmentTypeId": _eq_system_id[_eq['dts']],
+                // @ts-ignore
+                "equipmentCategoryId": category_id_map[_eq['dtc']],
+                "isDeleted": false,
+                // 'forge_id': _forge_id
+              }
+
+              _eq_post_arr.push(_eq_obj)
+              // console.log(_eq_obj['displayName'])
+
+
+            }
+            
+          }
+          // @ts-ignore
+          let _eq_resp = await lastValueFrom(this.httpClient.post("https://pce-dt-api.azurewebsites.net/Equipment/SaveEquipments", JSON.stringify(_eq_post_arr), {headers, responseType: 'text'}));
+          console.log(_eq_resp)
+          debugger        
+      
+      
+        
+       })
+        ;
+        // debugger
     }, (error: any) => {
         console.error("Error fetching bulk properties:", error);
     });
