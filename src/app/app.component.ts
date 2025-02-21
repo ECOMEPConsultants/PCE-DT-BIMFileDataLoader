@@ -57,6 +57,14 @@ export class AppComponent implements OnInit{
 
   }
 
+  private urn_name_map = {
+    // 'urn': 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9IUmlzaGFicmFqLUdNQTYzJTIwQ29vcmRpbmF0ZWQubndk',
+    // 'name': 'GMA63-V2'
+
+    'urn': 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9NYW5nYWwlMjBCdWlsZGhvbWUtTWFsYWQlMjBHYXV0YW1fQ29vcmRpbmF0ZWRfUjQubndk',
+    'name': 'Mangal Buildhome-V2'
+  }
+
   public async init_forge() {
     if (this.forge_init) {
       return;
@@ -119,7 +127,7 @@ export class AppComponent implements OnInit{
       console.log('Initialization complete, loading a model next...');
     });
     // var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9IUmlzaGFicmFqLUdNQTYzJTIwQ29vcmRpbmF0ZWQubndk'; //gma63
-    var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZHQtcHJvai1idWNrZXQtMS9NYW5nYWwlMjBCdWlsZGhvbWUtTWFsYWQlMjBHYXV0YW1fQ29vcmRpbmF0ZWRfUjQubndk';
+    var documentId = this.urn_name_map['urn']
     Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess.bind(this), onDocumentLoadFailure);
     function onDocumentLoadSuccess(viewerDocument: any) {
       var defaultModel = viewerDocument.getRoot().getDefaultGeometry();
@@ -240,7 +248,7 @@ export class AppComponent implements OnInit{
           'region': 'Maharashtra',
           'portfolio_id': 1,
           'location_id': 'bb6e66dc-22c8-44c5-bcea-3aa10a1fe705',
-          'building_name': 'Mangal Buildhome-V2',
+          'building_name': this.urn_name_map['name'],
           // 'building_name': 'GMA63-V2',
           'building_urn': _viewer.model.getData().urn,
           'building_address': 'Goregaon',
